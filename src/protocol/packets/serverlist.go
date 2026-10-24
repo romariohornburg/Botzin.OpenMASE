@@ -2,12 +2,11 @@ package packets
 
 import (
 	"bytes"
+	"net"
 	"strconv"
-	"strings"
 
 	"github.com/iagoMAO/Botzin.OpenMASE/protocol"
 	"github.com/iagoMAO/Botzin.OpenMASE/utils/data"
-	"github.com/rs/zerolog/log"
 )
 
 type LobbyLevel int
@@ -27,6 +26,23 @@ type Lobby struct {
 	BotCount    uint8
 	PlayerCount uint8
 	LastSeen    int64
+}
+
+// IPv4 returns the lobby address as 4 bytes + port. The protocol only supports IPv4.
+func (l Lobby) IPv4() ([]byte, uint16, bool) {
+	host, portStr, err := net.SplitHostPort(l.Address)
+	if err != nil {
+		return nil, 0, false
+	}
+
+	ip := net.ParseIP(host).To4()
+	port, err := strconv.Atoi(portStr)
+
+	if ip == nil || err != nil || port <= 0 || port > 65535 {
+		return nil, 0, false
+	}
+
+	return ip, uint16(port), true
 }
 
 type GameMasterInfoRequest struct {
@@ -94,42 +110,24 @@ func (p MasterServerListResponse) Compose() []byte {
 	buf.Write(data.U32ToBytes(p.Key))
 	buf.WriteByte(p.PacketIndex)
 	buf.WriteByte(p.PacketTotal)
-	buf.Write(data.U16ToBytes(uint16(len(p.Lobbies))))
-
-	log.Info().Msgf("LOBBIES LENGTH %d", uint8(len(p.Lobbies)))
+	var addresses bytes.Buffer
+	count := 0
 
 	for _, lobby := range p.Lobbies {
-		parts := strings.Split(lobby.Address, ":")
-		strAddr := strings.Split(parts[0], ".")
-		strPort := parts[1]
-
-		intAddr := []uint8{}
-
-		for i := 0; i < len(strAddr); i++ {
-			s := strAddr[i]
-			i, err := strconv.Atoi(s)
-			if err != nil {
-				log.Debug().Msgf("error: %s", err)
-				break
-			}
-			intAddr = append(intAddr, uint8(i))
-		}
-
-		intPort, err := strconv.Atoi(strPort)
-
-		if err != nil {
-			log.Debug().Msgf("error: %s", err)
+		ip, port, ok := lobby.IPv4()
+		if !ok {
 			continue
 		}
 
-		buf.WriteByte(intAddr[0])
-		buf.WriteByte(intAddr[1])
-		buf.WriteByte(intAddr[2])
-		buf.WriteByte(intAddr[3])
-		buf.Write(data.U16ToBytes(uint16(intPort)))
+		addresses.Write(ip)
+		addresses.Write(data.U16ToBytes(port))
+		count++
 	}
 
-	if len(p.Lobbies) <= 0 {
+	buf.Write(data.U16ToBytes(uint16(count)))
+	buf.Write(addresses.Bytes())
+
+	if count <= 0 {
 		buf.Write([]byte{0, 0, 0, 0})
 		buf.Write(data.U16ToBytes(0))
 	}

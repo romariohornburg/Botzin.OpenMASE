@@ -29,9 +29,9 @@ INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_ge
 INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (39, 1, 'LightSubFlakCannon', '', 3, 20, 0, 0, 0, 2, 85000, 0, 1);
 
 INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (15, 5, 'RepairDrone', '', 0, 0, 0, 0, 2, 1, 48000, 0, 1);
-INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (16, 5, 'ShieldDrone', '', 0, 0, 0, 0, 2, 1, 48000, 0, 1);
+INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (16, 5, 'ShieldDrone', '', 0, 2, 0, 0, 0, 1, 48000, 0, 1);
 INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (40, 5, 'RepairDroneG2', '', 0, 0, 0, 0, 4, 2, 96000, 0, 1);
-INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (41, 5, 'ShieldDroneG2', '', 0, 0, 0, 0, 4, 2, 96000, 0, 1);
+INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (41, 5, 'ShieldDroneG2', '', 0, 4, 0, 0, 0, 2, 96000, 0, 1);
 
 INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (17, 2, 'G1 BABYBOY', '', 10, 100, 100, 100, 100, 1, 0, 0, 0);
 INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (18, 2, 'G1 SMARTY-M', '', 11, 110, 90, 110, 90, 1, 192000, 0, 1);
@@ -44,3 +44,46 @@ INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_ge
 
 INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (42, 2, 'G2 BOT-G201', '', 12, 115, 115, 115, 115, 2, 420000, 0, 1);
 INSERT INTO items (id, class, name, description, payload, st, dx, iq, ht, the_gen, credits, gold, can_sell) VALUES (43, 2, 'G2 BOT-G202', '', 13, 115, 110, 110, 125, 2, 480000, 0, 1);
+
+-- Weapon mount point and stock per world, from the 1.17 client catalog (registerItem)
+UPDATE items SET mount = 2, max_per_world = 100000 WHERE id = 1;
+UPDATE items SET mount = 2, max_per_world = 100000 WHERE id = 2;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 3;
+UPDATE items SET mount = 2, max_per_world = 100000 WHERE id = 5;
+UPDATE items SET mount = 3, max_per_world = 10000 WHERE id = 6;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 8;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 9;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 10;
+UPDATE items SET mount = 2, max_per_world = 100000 WHERE id = 11;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 12;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 13;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 14;
+UPDATE items SET mount = 3, max_per_world = 10000 WHERE id = 25;
+UPDATE items SET mount = 3, max_per_world = 10000 WHERE id = 26;
+UPDATE items SET mount = 3, max_per_world = 10000 WHERE id = 27;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 28;
+UPDATE items SET mount = 3, max_per_world = 10000 WHERE id = 29;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 30;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 31;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 32;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 33;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 34;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 35;
+UPDATE items SET mount = 3, max_per_world = 10000 WHERE id = 36;
+UPDATE items SET mount = 3, max_per_world = 10000 WHERE id = 37;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 38;
+UPDATE items SET mount = 2, max_per_world = 10000 WHERE id = 39;
+UPDATE items SET mount = 1, max_per_world = 10000 WHERE id = 15;
+UPDATE items SET mount = 1, max_per_world = 10000 WHERE id = 16;
+UPDATE items SET mount = 1, max_per_world = 10000 WHERE id = 40;
+UPDATE items SET mount = 1, max_per_world = 10000 WHERE id = 41;
+UPDATE items SET mount = 0, max_per_world = 100000 WHERE id = 17;
+UPDATE items SET mount = 0, max_per_world = 10000 WHERE id = 18;
+UPDATE items SET mount = 0, max_per_world = 10000 WHERE id = 19;
+UPDATE items SET mount = 0, max_per_world = 10000 WHERE id = 20;
+UPDATE items SET mount = 0, max_per_world = 10000 WHERE id = 21;
+UPDATE items SET mount = 0, max_per_world = 10000 WHERE id = 22;
+UPDATE items SET mount = 0, max_per_world = 10000 WHERE id = 23;
+UPDATE items SET mount = 0, max_per_world = 10000 WHERE id = 24;
+UPDATE items SET mount = 0, max_per_world = 10000 WHERE id = 42;
+UPDATE items SET mount = 0, max_per_world = 10000 WHERE id = 43;

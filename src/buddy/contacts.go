@@ -22,7 +22,7 @@ func GetCategorizedContacts(userId int) packets.BuddyStatusList {
 			continue
 		}
 
-		switch session.Status {
+		switch session.GetStatus() {
 		case protocol.BUDDY_STATUS_ONLINE:
 			onlineContacts = append(onlineContacts, contact)
 		case protocol.BUDDY_STATUS_INGAME:
@@ -191,7 +191,7 @@ func GetContacts(userId int) []packets.BuddyContactInfo {
 }
 
 func QueryContacts(query string) []packets.BuddyContactInfo {
-	rows, err := database.DB.Query("SELECT id, username FROM users WHERE username LIKE ?", "%"+query+"%")
+	rows, err := database.DB.Query("SELECT id, username FROM users WHERE username LIKE ? AND banned = 0 LIMIT 50", "%"+query+"%")
 
 	if err != nil {
 		return []packets.BuddyContactInfo{}

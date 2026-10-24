@@ -15,12 +15,43 @@ Reimplementação/emulador de servidor do finado MMO brasileiro Botzin!!! da Gre
 
 # Funcionalidades
 - [x] <b>Criptografia (MD5/XTEA)</b>
-- [x] <b>Autenticação (Login/Cadastro)</b>
-- [x] <b>Inventário (Avatar/Loja)</b>
+- [x] <b>Autenticação (Login/Cadastro)</b> — cadastro via página web (`REGISTER_PORT`) ou console, bloqueio de login duplicado e contas banidas
+- [x] <b>Inventário (Avatar/Loja)</b> — compra, venda, presente* e preço/estoque por item; validação de equipamento (payload do bot) e de atributos
 - [x] <b>MasterServer (Lista de Lobby)</b>
 - [x] <b>Broadcasts (Anûncios Globais)</b>
-- [x] <b>Buddylist (Lista de Amigos)</b>
-- [ ] Progressão (Pontuação por Rounds, XP, etc...)
+- [x] <b>Buddylist (Lista de Amigos)</b> — login autenticado por token de sessão
+- [x] <b>Progressão (Pontuação por Rounds, XP, etc...)</b> — relatório de fim de partida enviado pelo host; XP, créditos, nível, patente e ranking global
+- [x] <b>Console de administração</b>
+
+<sub>Os formatos de pacote foram confirmados com engenharia reversa dos scripts TorqueScript (DSO) embutidos no cliente 1.17. * O cliente 1.17 define o pacote de presente mas nunca o envia; o servidor o suporta para clientes/ferramentas futuras.</sub>
+
+<br>
+
+# Executando
+```sh
+cd src
+cp .env.example .env
+go run .
+```
+O catálogo de itens (`sql/items.sql`) é carregado automaticamente quando o banco está vazio. Todas as opções estão documentadas no `.env.example`.
+
+## Console
+Os comandos aceitam `comando(arg1, "arg 2")` ou `comando arg1 arg2`. Digite `help` para a lista completa:
+
+| Comando | Descrição |
+|---|---|
+| `register(nick, senha)` / `setpass(nick, senha)` | cria conta / troca senha |
+| `online()` / `info(nick)` | jogadores conectados / dados, estatísticas e inventário |
+| `kick(nick)` / `ban(nick)` / `unban(nick)` | moderação |
+| `credits(nick, qtd)` / `gold(nick, qtd)` / `xp(nick, qtd)` / `give(nick, itemId)` | ajustes de conta |
+| `broadcast(mensagem[, cor])` / `msg(nick, mensagem)` | anúncios |
+| `ranking([n])` / `lobbies()` / `items()` / `reloaditems()` | consultas e recarga do catálogo |
+
+## Testes
+```sh
+cd src
+go test -race ./...
+```
 
 <br>
 

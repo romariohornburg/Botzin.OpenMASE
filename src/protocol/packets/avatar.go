@@ -47,8 +47,8 @@ type ServerQueryAvatarAnswerPacket struct {
 	IQ               int
 	HT               int
 	XP               int
-	patent           int
-	ranking          int
+	Patent           int
+	Ranking          int
 }
 
 func createItemsPayload(totalItems int, items []AvatarItemData, writeGen bool) []byte {
@@ -108,9 +108,9 @@ func (p ServerQueryAvatarAnswerPacket) Compose() []byte {
 	buf.WriteByte(0x09)
 	buf.Write(data.SCR_PackInt(p.XP))
 	buf.WriteByte(0x09)
-	buf.Write(data.SCR_PackInt(p.patent))
+	buf.Write(data.SCR_PackInt(p.Patent))
 	buf.WriteByte(0x09)
-	buf.Write(data.SCR_PackInt(p.ranking))
+	buf.Write(data.SCR_PackInt(p.Ranking))
 
 	if p.TotalAvatarItems > 0 {
 		buf.WriteByte(0x09)
@@ -158,6 +158,22 @@ type AvatarAttribSaveAnswerPacket struct {
 
 func (p AvatarAttribSaveAnswerPacket) Compose() []byte {
 	return protocol.EncryptPacket(protocol.AvatarAttribSaveAnswer, []byte{}, p.Status)
+}
+
+type AvatarCheckPayLoadAnswerPacket struct {
+	Status   protocol.StatusCode
+	Capacity int
+	Used     int
+}
+
+func (p AvatarCheckPayLoadAnswerPacket) Compose() []byte {
+	var buf bytes.Buffer
+
+	buf.Write(data.SCR_PackInt(p.Capacity))
+	buf.WriteByte(0x09)
+	buf.Write(data.SCR_PackInt(p.Used))
+
+	return protocol.EncryptPacket(protocol.AvatarCheckPayLoadAnswer, buf.Bytes(), p.Status)
 }
 
 func (p AvatarAttribLoadAnswerPacket) Compose() []byte {

@@ -29,6 +29,7 @@ const (
 	BroadcastRequest          PacketType = 46
 	DisconnectRequest         PacketType = 42
 	HackBusterRequest         PacketType = 150
+	KeepAliveSignal           PacketType = 50
 	LoginRequest              PacketType = 2
 	PingRequest               PacketType = 38
 	ScoreRequest              PacketType = 18

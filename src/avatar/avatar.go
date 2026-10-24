@@ -5,8 +5,10 @@ import (
 
 	"github.com/iagoMAO/Botzin.OpenMASE/authentication"
 	"github.com/iagoMAO/Botzin.OpenMASE/database"
+	"github.com/iagoMAO/Botzin.OpenMASE/items"
 	"github.com/iagoMAO/Botzin.OpenMASE/protocol"
 	"github.com/iagoMAO/Botzin.OpenMASE/protocol/packets"
+	"github.com/iagoMAO/Botzin.OpenMASE/utils"
 	"github.com/iagoMAO/Botzin.OpenMASE/utils/data"
 	"github.com/rs/zerolog/log"
 )
@@ -77,6 +79,9 @@ func GetAvatarSetupData(id int) packets.ServerQueryAvatarAnswerPacket {
 		return packets.ServerQueryAvatarAnswerPacket{}
 	}
 
+	var patent, ranking int
+	database.DB.QueryRow("SELECT patent, ranking FROM users WHERE id = ?", id).Scan(&patent, &ranking)
+
 	packet := packets.ServerQueryAvatarAnswerPacket{
 		ClientGUID:       id,
 		TotalAvatarItems: len(items),
@@ -87,6 +92,8 @@ func GetAvatarSetupData(id int) packets.ServerQueryAvatarAnswerPacket {
 		IQ:               user.IQ,
 		HT:               user.HT,
 		XP:               user.XP,
+		Patent:           patent,
+		Ranking:          ranking,
 	}
 
 	return packet
@@ -157,7 +164,24 @@ func GetAvatarInfo(id int) packets.AvatarSetupLoadAnswerPacket {
 }
 
 func SaveAvatarSetup(userId int, request packets.AvatarSetupSaveRequestPacket) packets.AvatarSetupSaveAnswerPacket {
-	_, err := database.DB.Exec("UPDATE user_items SET enabled = 0 WHERE user_id = ?", userId)
+	owned, _, err := items.Owned(database.DB, userId)
+	if err != nil {
+		log.Error().Msgf("Failed to load inventory for user %d: %s", userId, err)
+		return packets.AvatarSetupSaveAnswerPacket{Status: protocol.MASE_ERROR}
+	}
+
+	if _, err := items.ValidateSetup(owned, request.ItemIds); err != nil {
+		log.Warn().Msgf("User %d sent an invalid avatar setup %v: %s", userId, request.ItemIds, err)
+		return packets.AvatarSetupSaveAnswerPacket{Status: protocol.MASE_ERROR}
+	}
+
+	tx, err := database.DB.Begin()
+	if err != nil {
+		return packets.AvatarSetupSaveAnswerPacket{Status: protocol.MASE_ERROR}
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec("UPDATE user_items SET enabled = 0 WHERE user_id = ?", userId)
 	if err != nil {
 		log.Error().Msgf("Failed to unequip items for user %d", userId)
 		return packets.AvatarSetupSaveAnswerPacket{
@@ -166,7 +190,7 @@ func SaveAvatarSetup(userId int, request packets.AvatarSetupSaveRequestPacket) p
 	}
 
 	for _, item := range request.ItemIds {
-		_, err = database.DB.Exec("UPDATE user_items SET enabled = 1 WHERE user_id = ? AND item_id = ?", userId, item)
+		_, err = tx.Exec("UPDATE user_items SET enabled = 1 WHERE user_id = ? AND item_id = ?", userId, item)
 		if err != nil {
 			log.Error().Msgf("Failed to equip item %d for user %d", item, userId)
 			return packets.AvatarSetupSaveAnswerPacket{
@@ -174,6 +198,10 @@ func SaveAvatarSetup(userId int, request packets.AvatarSetupSaveRequestPacket) p
 			}
 		}
 
+	}
+
+	if err := tx.Commit(); err != nil {
+		return packets.AvatarSetupSaveAnswerPacket{Status: protocol.MASE_ERROR}
 	}
 
 	return packets.AvatarSetupSaveAnswerPacket{
@@ -197,6 +225,22 @@ func SaveAvatarAttrib(userId int, request packets.AvatarAttribSaveRequestPacket)
 		return packets.AvatarAttribSaveAnswerPacket{
 			Status: protocol.MASE_ERROR,
 		}
+	}
+
+	bot, err := items.Get(request.BotId)
+	if err != nil {
+		return packets.AvatarAttribSaveAnswerPacket{Status: protocol.MASE_ERROR}
+	}
+
+	var level int
+	database.DB.QueryRow("SELECT level FROM users WHERE id = ?", userId).Scan(&level)
+
+	cfg := utils.GetConfig()
+	limits := items.AttribLimits{Min: cfg.ATTRIB_MIN, Max: cfg.ATTRIB_MAX, PointsPerLevel: cfg.ATTRIB_POINTS_PER_LEVEL}
+
+	if err := items.ValidateAttribs(bot, level, request.ST, request.DX, request.IQ, request.HT, limits); err != nil {
+		log.Warn().Msgf("User %d sent invalid attributes for bot %d (%d/%d/%d/%d): %s", userId, request.BotId, request.ST, request.DX, request.IQ, request.HT, err)
+		return packets.AvatarAttribSaveAnswerPacket{Status: protocol.MASE_ERROR}
 	}
 
 	query := "UPDATE user_items SET st = ?, dx = ?, iq = ?, ht = ? WHERE user_id = ? AND id = ?"
@@ -249,4 +293,36 @@ func GetAvatarAttrib(id int) packets.AvatarAttribLoadAnswerPacket {
 		IQ: string(data.SCR_PackInt(u.IQ)),
 		HT: string(data.SCR_PackInt(u.HT)),
 	}
+}
+
+// CheckPayload verifies the given setup (or the equipped one, when empty) fits in the bot.
+func CheckPayload(userId int, itemIds []int) packets.AvatarCheckPayLoadAnswerPacket {
+	owned, equipped, err := items.Owned(database.DB, userId)
+	if err != nil {
+		return packets.AvatarCheckPayLoadAnswerPacket{Status: protocol.MASE_ERROR}
+	}
+
+	if len(itemIds) == 0 {
+		for id, enabled := range equipped {
+			if enabled {
+				itemIds = append(itemIds, id)
+			}
+		}
+	}
+
+	var setup []items.Item
+	for _, id := range itemIds {
+		if item, ok := owned[id]; ok {
+			setup = append(setup, item)
+		}
+	}
+
+	capacity, used := items.PayloadUsage(setup)
+
+	status := protocol.MASE_OK
+	if _, err := items.ValidateSetup(owned, itemIds); err != nil {
+		status = protocol.MASE_ERROR
+	}
+
+	return packets.AvatarCheckPayLoadAnswerPacket{Status: status, Capacity: capacity, Used: used}
 }

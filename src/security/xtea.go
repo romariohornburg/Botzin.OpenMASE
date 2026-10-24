@@ -80,13 +80,22 @@ func encryptBlock(data, key []byte) []byte {
 	return out
 }
 
+func getKey() []byte {
+	key, err := hex.DecodeString(utils.GetConfig().XTEA_KEY)
+
+	if err != nil || len(key) != 16 {
+		log.Error().Msgf("XTEA failed to load the cipher key (expected 32 hex chars): %v", err)
+		return nil
+	}
+
+	return key
+}
+
 func EncryptXTEA(data []byte) []byte {
-	cfg := utils.GetConfig()
+	key := getKey()
 
-	key, err := hex.DecodeString(cfg.XTEA_KEY)
-
-	if err != nil {
-		log.Error().Msgf("XTEA failed to load the cipher key: %s", err)
+	if key == nil {
+		return nil
 	}
 
 	paddedData := pad(data, 8)
@@ -102,12 +111,11 @@ func EncryptXTEA(data []byte) []byte {
 }
 
 func DecryptXTEA(data []byte) []byte {
-	cfg := utils.GetConfig()
+	key := getKey()
 
-	key, err := hex.DecodeString(cfg.XTEA_KEY)
-
-	if err != nil {
-		log.Error().Msgf("XTEA failed to load the cipher key: %s", err)
+	// XTEA works on 8 byte blocks, anything else is malformed
+	if key == nil || len(data)%8 != 0 {
+		return nil
 	}
 
 	out := []byte(nil)
